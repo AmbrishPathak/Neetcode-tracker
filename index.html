@@ -1,445 +1,516 @@
-import React, { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react'; // For dark/light mode icons
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeetCode Progress Tracker</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- React and ReactDOM CDNs -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel CDN for in-browser JSX transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-// Problem data as provided by the user, structured for easy access
-const daysData = [
-  {
-    day: 'Day 1',
-    date: 'June 9 (Sun)',
-    topic: 'Arrays & Hashing',
-    problems: [
-      'Two Sum',
-      'Valid Anagram',
-      'Group Anagrams',
-      'Top K Frequent Elements',
-      'Product of Array Except Self',
-      'Valid Sudoku',
-      'Encode and Decode Strings',
-      'Longest Consecutive Sequence',
-      'Contains Duplicate',
-    ],
-  },
-  {
-    day: 'Day 2',
-    date: 'June 10 (Mon)',
-    topic: 'Two Pointers + Sliding Window',
-    problems: [
-      'Valid Palindrome',
-      'Two Sum II',
-      '3Sum',
-      'Container With Most Water',
-      'Trapping Rain Water',
-      'Best Time to Buy and Sell Stock',
-      'Longest Substring Without Repeating Characters',
-      'Permutation in String',
-      'Minimum Window Substring',
-      'Sliding Window Maximum',
-    ],
-  },
-  {
-    day: 'Day 3',
-    date: 'June 11 (Tue)',
-    topic: 'Stack',
-    problems: [
-      'Valid Parentheses',
-      'Min Stack',
-      'Daily Temperatures',
-      'Car Fleet',
-      'Evaluate Reverse Polish Notation',
-      'Generate Parentheses',
-      'Largest Rectangle in Histogram',
-    ],
-  },
-  {
-    day: 'Day 4',
-    date: 'June 12 (Wed)',
-    topic: 'Binary Search',
-    problems: [
-      'Binary Search',
-      'Search a 2D Matrix',
-      'Koko Eating Bananas',
-      'Find Minimum in Rotated Sorted Array',
-      'Search in Rotated Sorted Array',
-      'Time Based Key-Value Store',
-      'Median of Two Sorted Arrays',
-    ],
-  },
-  {
-    day: 'Day 5',
-    date: 'June 13 (Thu)',
-    topic: 'Linked List',
-    problems: [
-      'Reverse Linked List',
-      'Merge Two Sorted Lists',
-      'Reorder List',
-      'Remove Nth Node From End of List',
-      'Copy List With Random Pointer',
-      'Add Two Numbers',
-      'Linked List Cycle',
-      'Intersection of Two Linked Lists',
-      'Find the Duplicate Number',
-      'LRU Cache',
-      'Design Linked List',
-    ],
-  },
-  {
-    day: 'Day 6',
-    date: 'June 14 (Fri)',
-    topic: 'Trees I',
-    problems: [
-      'Maximum Depth of Binary Tree',
-      'Same Tree',
-      'Invert Binary Tree',
-      'Subtree of Another Tree',
-      'Diameter of Binary Tree',
-      'Balanced Binary Tree',
-      'Binary Tree Level Order Traversal',
-      'Binary Tree Right Side View',
-      'Lowest Common Ancestor of BST',
-      'Validate Binary Search Tree',
-    ],
-  },
-  // June 15 (Sat) is skipped as per user request
-  {
-    day: 'Day 7',
-    date: 'June 16 (Sun)',
-    topic: 'Trees II + Heap',
-    problems: [
-      'Kth Smallest Element in a BST',
-      'Binary Tree Zigzag Level Order',
-      'Serialize and Deserialize Binary Tree',
-      'Construct Binary Tree from Preorder and Inorder',
-      'Maximum Width of Binary Tree',
-      'Merge K Sorted Lists',
-      'Top K Frequent Elements', // This is repeated, assuming intentional.
-      'K Closest Points to Origin',
-      'Last Stone Weight',
-      'Task Scheduler',
-    ],
-  },
-  {
-    day: 'Day 8',
-    date: 'June 17 (Mon)',
-    topic: 'Backtracking',
-    problems: [
-      'Subsets',
-      'Subsets II',
-      'Combination Sum',
-      'Combination Sum II',
-      'Permutations',
-      'Permutations II',
-      'Word Search',
-      'N-Queens',
-      'Sudoku Solver',
-    ],
-  },
-  {
-    day: 'Day 9',
-    date: 'June 18 (Tue)',
-    topic: 'Graphs I',
-    problems: [
-      'Clone Graph',
-      'Number of Islands',
-      'Max Area of Island',
-      'Pacific Atlantic Water Flow',
-      'Surrounded Regions',
-      'Rotting Oranges',
-      'Walls and Gates',
-      'Course Schedule',
-      'Course Schedule II',
-      'Redundant Connection',
-    ],
-  },
-  {
-    day: 'Day 10',
-    date: 'June 19 (Wed)',
-    topic: 'Graphs II',
-    problems: [
-      'Graph Valid Tree',
-      'Number of Connected Components in Undirected Graph',
-      'Word Ladder',
-      'Network Delay Time',
-    ],
-  },
-];
+  <style>
+    /* Custom styles for the scrollbar on DayTabs for better UX */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none; /* Hide scrollbar for Chrome, Safari, and Opera */
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;  /* Hide scrollbar for IE and Edge */
+      scrollbar-width: none;  /* Hide scrollbar for Firefox */
+    }
 
-/**
- * Header component for the application, including the title and dark/light mode toggle.
- * @param {object} props - The component props.
- * @param {boolean} props.isDarkMode - Indicates if dark mode is active.
- * @param {function} props.toggleDarkMode - Function to toggle dark mode.
- */
-const Header = ({ isDarkMode, toggleDarkMode }) => {
-  return (
-    <header className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg rounded-b-xl">
-      <h1 className="text-3xl font-extrabold tracking-tight text-shadow-md">NeetCode Challenge Tracker</h1>
-      <button
-        onClick={toggleDarkMode}
-        className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white"
-        aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+    /* Basic fade-in animation for ProblemList */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+
+    /* Shadow for text in header for better visibility */
+    .text-shadow-md {
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Apply Inter font globally */
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="dark:bg-gray-900 transition-colors duration-300">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // Problem data as provided by the user, structured for easy access
+    const daysData = [
+      {
+        day: 'Day 1',
+        date: 'June 9 (Sun)',
+        topic: 'Arrays & Hashing',
+        problems: [
+          'Two Sum',
+          'Valid Anagram',
+          'Group Anagrams',
+          'Top K Frequent Elements',
+          'Product of Array Except Self',
+          'Valid Sudoku',
+          'Encode and Decode Strings',
+          'Longest Consecutive Sequence',
+          'Contains Duplicate',
+        ],
+      },
+      {
+        day: 'Day 2',
+        date: 'June 10 (Mon)',
+        topic: 'Two Pointers + Sliding Window',
+        problems: [
+          'Valid Palindrome',
+          'Two Sum II',
+          '3Sum',
+          'Container With Most Water',
+          'Trapping Rain Water',
+          'Best Time to Buy and Sell Stock',
+          'Longest Substring Without Repeating Characters',
+          'Permutation in String',
+          'Minimum Window Substring',
+          'Sliding Window Maximum',
+        ],
+      },
+      {
+        day: 'Day 3',
+        date: 'June 11 (Tue)',
+        topic: 'Stack',
+        problems: [
+          'Valid Parentheses',
+          'Min Stack',
+          'Daily Temperatures',
+          'Car Fleet',
+          'Evaluate Reverse Polish Notation',
+          'Generate Parentheses',
+          'Largest Rectangle in Histogram',
+        ],
+      },
+      {
+        day: 'Day 4',
+        date: 'June 12 (Wed)',
+        topic: 'Binary Search',
+        problems: [
+          'Binary Search',
+          'Search a 2D Matrix',
+          'Koko Eating Bananas',
+          'Find Minimum in Rotated Sorted Array',
+          'Search in Rotated Sorted Array',
+          'Time Based Key-Value Store',
+          'Median of Two Sorted Arrays',
+        ],
+      },
+      {
+        day: 'Day 5',
+        date: 'June 13 (Thu)',
+        topic: 'Linked List',
+        problems: [
+          'Reverse Linked List',
+          'Merge Two Sorted Lists',
+          'Reorder List',
+          'Remove Nth Node From End of List',
+          'Copy List With Random Pointer',
+          'Add Two Numbers',
+          'Linked List Cycle',
+          'Intersection of Two Linked Lists',
+          'Find the Duplicate Number',
+          'LRU Cache',
+          'Design Linked List',
+        ],
+      },
+      {
+        day: 'Day 6',
+        date: 'June 14 (Fri)',
+        topic: 'Trees I',
+        problems: [
+          'Maximum Depth of Binary Tree',
+          'Same Tree',
+          'Invert Binary Tree',
+          'Subtree of Another Tree',
+          'Diameter of Binary Tree',
+          'Balanced Binary Tree',
+          'Binary Tree Level Order Traversal',
+          'Binary Tree Right Side View',
+          'Lowest Common Ancestor of BST',
+          'Validate Binary Search Tree',
+        ],
+      },
+      // June 15 (Sat) is skipped as per user request
+      {
+        day: 'Day 7',
+        date: 'June 16 (Sun)',
+        topic: 'Trees II + Heap',
+        problems: [
+          'Kth Smallest Element in a BST',
+          'Binary Tree Zigzag Level Order',
+          'Serialize and Deserialize Binary Tree',
+          'Construct Binary Tree from Preorder and Inorder',
+          'Maximum Width of Binary Tree',
+          'Merge K Sorted Lists',
+          'Top K Frequent Elements',
+          'K Closest Points to Origin',
+          'Last Stone Weight',
+          'Task Scheduler',
+        ],
+      },
+      {
+        day: 'Day 8',
+        date: 'June 17 (Mon)',
+        topic: 'Backtracking',
+        problems: [
+          'Subsets',
+          'Subsets II',
+          'Combination Sum',
+          'Combination Sum II',
+          'Permutations',
+          'Permutations II',
+          'Word Search',
+          'N-Queens',
+          'Sudoku Solver',
+        ],
+      },
+      {
+        day: 'Day 9',
+        date: 'June 18 (Tue)',
+        topic: 'Graphs I',
+        problems: [
+          'Clone Graph',
+          'Number of Islands',
+          'Max Area of Island',
+          'Pacific Atlantic Water Flow',
+          'Surrounded Regions',
+          'Rotting Oranges',
+          'Walls and Gates',
+          'Course Schedule',
+          'Course Schedule II',
+          'Redundant Connection',
+        ],
+      },
+      {
+        day: 'Day 10',
+        date: 'June 19 (Wed)',
+        topic: 'Graphs II',
+        problems: [
+          'Graph Valid Tree',
+          'Number of Connected Components in Undirected Graph',
+          'Word Ladder',
+          'Network Delay Time',
+        ],
+      },
+    ];
+
+    // Inline SVG for Sun icon (replaces LucideReact Sun)
+    const SunIcon = (props) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
       >
-        {isDarkMode ? <Sun className="h-6 w-6 text-yellow-300" /> : <Moon className="h-6 w-6 text-gray-800" />}
-      </button>
-    </header>
-  );
-};
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="M4.93 4.93l1.41 1.41" />
+        <path d="M17.66 17.66l1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="M4.93 19.07l1.41-1.41" />
+        <path d="M17.66 6.34l1.41-1.41" />
+      </svg>
+    );
 
-/**
- * LandingPage component displayed before the main challenge tracker.
- * @param {object} props - The component props.
- * @param {function} props.onStartChallenge - Function to start the challenge.
- */
-const LandingPage = ({ onStartChallenge }) => {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 to-purple-700 text-white p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-2xl transform hover:scale-105 transition-all duration-500 ease-in-out">
-        <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-6">Welcome to the NeetCode Progress Tracker!</h2>
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-8">
-          Embark on your journey to master data structures and algorithms. This app helps you track your progress through daily LeetCode problems from the NeetCode roadmap. Stay motivated and track your completion!
-        </p>
-        <button
-          onClick={onStartChallenge}
-          className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white text-xl font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-400"
-        >
-          Start Challenge
-        </button>
-      </div>
-    </div>
-  );
-};
+    // Inline SVG for Moon icon (replaces LucideReact Moon)
+    const MoonIcon = (props) => (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+      </svg>
+    );
 
-/**
- * ProgressBar component to display daily progress.
- * @param {object} props - The component props.
- * @param {number} props.progress - The completion percentage (0-100).
- */
-const ProgressBar = ({ progress }) => {
-  const barColor = progress === 100 ? 'bg-green-500' : 'bg-blue-500';
+    /**
+     * Header component for the application, including the title and dark/light mode toggle.
+     * @param {object} props - The component props.
+     * @param {boolean} props.isDarkMode - Indicates if dark mode is active.
+     * @param {function} props.toggleDarkMode - Function to toggle dark mode.
+     */
+    const Header = ({ isDarkMode, toggleDarkMode }) => {
+      return (
+        <header className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg rounded-b-xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-shadow-md">NeetCode Challenge Tracker</h1>
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-white"
+            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDarkMode ? <SunIcon className="h-6 w-6 text-yellow-300" /> : <MoonIcon className="h-6 w-6 text-gray-800" />}
+          </button>
+        </header>
+      );
+    };
 
-  return (
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-4 shadow-inner">
-      <div
-        className={`${barColor} h-3 rounded-full transition-all duration-500 ease-out`}
-        style={{ width: `${progress}%` }}
-        role="progressbar"
-        aria-valuenow={progress}
-        aria-valuemin="0"
-        aria-valuemax="100"
-      ></div>
-    </div>
-  );
-};
-
-/**
- * ProblemItem component for a single LeetCode problem.
- * @param {object} props - The component props.
- * @param {string} props.problemTitle - The title of the problem.
- * @param {boolean} props.isCompleted - Whether the problem is completed.
- * @param {function} props.onToggle - Function to toggle problem completion status.
- */
-const ProblemItem = ({ problemTitle, isCompleted, onToggle }) => {
-  return (
-    <li className="flex items-center p-3 my-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 dark:border-gray-600">
-      <input
-        type="checkbox"
-        checked={isCompleted}
-        onChange={onToggle}
-        className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 cursor-pointer transition-colors duration-200 mr-3"
-      />
-      <span className={`text-lg font-medium ${isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-white'}`}>
-        {problemTitle}
-      </span>
-    </li>
-  );
-};
-
-/**
- * ProblemList component displays problems for the selected day, including progress bar.
- * @param {object} props - The component props.
- * @param {object} props.dayData - Data for the current day (date, problems, topic).
- * @param {object} props.completedProblems - Object containing completion status for all problems.
- * @param {function} props.onProblemToggle - Function to handle toggling a problem's completion.
- */
-const ProblemList = ({ dayData, completedProblems, onProblemToggle }) => {
-  const problemsForDay = dayData.problems;
-  const completedCount = problemsForDay.filter(problem => completedProblems[dayData.day]?.[problem]).length;
-  const totalProblems = problemsForDay.length;
-  const progress = totalProblems > 0 ? (completedCount / totalProblems) * 100 : 0;
-
-  return (
-    <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg mt-4 animate-fade-in">
-      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{dayData.day}: {dayData.topic}</h2>
-      <p className="text-md text-gray-600 dark:text-gray-300 mb-4">{dayData.date}</p>
-      <ProgressBar progress={progress} />
-      <ul className="space-y-3">
-        {problemsForDay.map((problem) => (
-          <ProblemItem
-            key={problem}
-            problemTitle={problem}
-            isCompleted={!!completedProblems[dayData.day]?.[problem]}
-            onToggle={() => onProblemToggle(dayData.day, problem)}
-          />
-        ))}
-      </ul>
-    </div>
-  );
-};
-
-/**
- * DayTabs component for navigating between different days.
- * @param {object} props - The component props.
- * @param {Array<object>} props.days - Array of day data.
- * @param {number} props.activeDayIndex - Index of the currently active day.
- * @param {function} props.setActiveDayIndex - Function to set the active day index.
- */
-const DayTabs = ({ days, activeDayIndex, setActiveDayIndex }) => {
-  return (
-    <div className="flex flex-wrap justify-center gap-2 p-2 bg-gray-100 dark:bg-gray-900 rounded-xl shadow-inner overflow-x-auto no-scrollbar">
-      {days.map((day, index) => (
-        <button
-          key={day.day}
-          onClick={() => setActiveDayIndex(index)}
-          className={`
-            px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
-            ${index === activeDayIndex
-              ? 'bg-blue-600 text-white shadow-md transform scale-105'
-              : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-600 shadow-sm'
-            }
-            focus:outline-none focus:ring-2 focus:ring-blue-500
-          `}
-        >
-          {day.day}
-          <br />
-          <span className="text-xs opacity-80">{day.date.split('(')[0].trim()}</span>
-        </button>
-      ))}
-    </div>
-  );
-};
-
-/**
- * Footer component for attribution.
- */
-const Footer = () => {
-  return (
-    <footer className="w-full p-4 text-center text-gray-600 dark:text-gray-400 mt-8 text-sm">
-      <p>Built by Your Name | <a href="https://github.com/your-github-link" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub</a></p>
-    </footer>
-  );
-};
-
-/**
- * Main App component for the NeetCode Progress Tracker.
- */
-function App() {
-  // State to manage whether the landing page is shown
-  const [showLandingPage, setShowLandingPage] = useState(() => {
-    // Check local storage for a 'hasStartedChallenge' flag
-    const hasStarted = localStorage.getItem('hasStartedChallenge');
-    return hasStarted !== 'true'; // Show landing page if not started
-  });
-
-  // State for the active day tab
-  const [activeDayIndex, setActiveDayIndex] = useState(() => {
-    // Load active day from local storage, default to 0 (Day 1)
-    const savedIndex = localStorage.getItem('activeDayIndex');
-    return savedIndex !== null ? parseInt(savedIndex, 10) : 0;
-  });
-
-  // State for dark mode preference
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check local storage for dark mode preference, default to system preference
-    const savedMode = localStorage.getItem('isDarkMode');
-    if (savedMode !== null) {
-      return JSON.parse(savedMode);
-    }
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  // State to store completion status of problems
-  const [completedProblems, setCompletedProblems] = useState(() => {
-    // Load completed problems from local storage
-    const saved = localStorage.getItem('completedProblems');
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  // Effect to save activeDayIndex to local storage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('activeDayIndex', activeDayIndex.toString());
-  }, [activeDayIndex]);
-
-  // Effect to save dark mode preference to local storage and apply/remove 'dark' class to body
-  useEffect(() => {
-    localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  // Effect to save completedProblems to local storage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('completedProblems', JSON.stringify(completedProblems));
-  }, [completedProblems]);
-
-  /**
-   * Toggles the dark mode status.
-   */
-  const toggleDarkMode = () => {
-    setIsDarkMode(prevMode => !prevMode);
-  };
-
-  /**
-   * Handles the toggling of a problem's completion status.
-   * @param {string} dayName - The name of the day (e.g., "Day 1").
-   * @param {string} problemTitle - The title of the problem.
-   */
-  const handleProblemToggle = (dayName, problemTitle) => {
-    setCompletedProblems(prev => {
-      const newCompletedProblems = { ...prev };
-      if (!newCompletedProblems[dayName]) {
-        newCompletedProblems[dayName] = {};
-      }
-      newCompletedProblems[dayName][problemTitle] = !newCompletedProblems[dayName][problemTitle];
-      return newCompletedProblems;
-    });
-  };
-
-  /**
-   * Function to handle starting the challenge from the landing page.
-   * Sets `showLandingPage` to false and marks the challenge as started in local storage.
-   */
-  const handleStartChallenge = () => {
-    setShowLandingPage(false);
-    localStorage.setItem('hasStartedChallenge', 'true');
-  };
-
-  if (showLandingPage) {
-    return <LandingPage onStartChallenge={handleStartChallenge} />;
-  }
-
-  // Main application content
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 font-inter text-gray-900 dark:text-white transition-colors duration-300">
-      <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-      <main className="flex-1 p-4 flex flex-col items-center">
-        <div className="w-full max-w-4xl">
-          <DayTabs
-            days={daysData}
-            activeDayIndex={activeDayIndex}
-            setActiveDayIndex={setActiveDayIndex}
-          />
-          <ProblemList
-            dayData={daysData[activeDayIndex]}
-            completedProblems={completedProblems}
-            onProblemToggle={handleProblemToggle}
-          />
+    /**
+     * LandingPage component displayed before the main challenge tracker.
+     * @param {object} props - The component props.
+     * @param {function} props.onStartChallenge - Function to start the challenge.
+     */
+    const LandingPage = ({ onStartChallenge }) => {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 to-purple-700 text-white p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 text-center max-w-2xl transform hover:scale-105 transition-all duration-500 ease-in-out">
+            <h2 className="text-4xl font-bold text-gray-800 dark:text-white mb-6">Welcome to the NeetCode Progress Tracker!</h2>
+            <p className="text-lg text-gray-700 dark:text-gray-300 mb-8">
+              Embark on your journey to master data structures and algorithms. This app helps you track your progress through daily LeetCode problems from the NeetCode roadmap. Stay motivated and track your completion!
+            </p>
+            <button
+              onClick={onStartChallenge}
+              className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white text-xl font-semibold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-400"
+            >
+              Start Challenge
+            </button>
+          </div>
         </div>
-      </main>
-      <Footer />
-    </div>
-  );
-}
+      );
+    };
 
-export default App;
+    /**
+     * ProgressBar component to display daily progress.
+     * @param {object} props - The component props.
+     * @param {number} props.progress - The completion percentage (0-100).
+     */
+    const ProgressBar = ({ progress }) => {
+      const barColor = progress === 100 ? 'bg-green-500' : 'bg-blue-500';
+
+      return (
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 mb-4 shadow-inner">
+          <div
+            className={`${barColor} h-3 rounded-full transition-all duration-500 ease-out`}
+            style={{ width: `${progress}%` }}
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          ></div>
+        </div>
+      );
+    };
+
+    /**
+     * ProblemItem component for a single LeetCode problem.
+     * @param {object} props - The component props.
+     * @param {string} props.problemTitle - The title of the problem.
+     * @param {boolean} props.isCompleted - Whether the problem is completed.
+     * @param {function} props.onToggle - Function to toggle problem completion status.
+     */
+    const ProblemItem = ({ problemTitle, isCompleted, onToggle }) => {
+      return (
+        <li className="flex items-center p-3 my-2 bg-white dark:bg-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 dark:border-gray-600">
+          <input
+            type="checkbox"
+            checked={isCompleted}
+            onChange={onToggle}
+            className="form-checkbox h-5 w-5 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 cursor-pointer transition-colors duration-200 mr-3"
+          />
+          <span className={`text-lg font-medium ${isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-800 dark:text-white'}`}>
+            {problemTitle}
+          </span>
+        </li>
+      );
+    };
+
+    /**
+     * ProblemList component displays problems for the selected day, including progress bar.
+     * @param {object} props - The component props.
+     * @param {object} props.dayData - Data for the current day (date, problems, topic).
+     * @param {object} props.completedProblems - Object containing completion status for all problems.
+     * @param {function} props.onProblemToggle - Function to handle toggling a problem's completion.
+     */
+    const ProblemList = ({ dayData, completedProblems, onProblemToggle }) => {
+      const problemsForDay = dayData.problems;
+      const completedCount = problemsForDay.filter(problem => completedProblems[dayData.day]?.[problem]).length;
+      const totalProblems = problemsForDay.length;
+      const progress = totalProblems > 0 ? (completedCount / totalProblems) * 100 : 0;
+
+      return (
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg mt-4 animate-fade-in">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{dayData.day}: {dayData.topic}</h2>
+          <p className="text-md text-gray-600 dark:text-gray-300 mb-4">{dayData.date}</p>
+          <ProgressBar progress={progress} />
+          <ul className="space-y-3">
+            {problemsForDay.map((problem) => (
+              <ProblemItem
+                key={problem}
+                problemTitle={problem}
+                isCompleted={!!completedProblems[dayData.day]?.[problem]}
+                onToggle={() => onProblemToggle(dayData.day, problem)}
+              />
+            ))}
+          </ul>
+        </div>
+      );
+    };
+
+    /**
+     * DayTabs component for navigating between different days.
+     * @param {object} props - The component props.
+     * @param {Array<object>} props.days - Array of day data.
+     * @param {number} props.activeDayIndex - Index of the currently active day.
+     * @param {function} props.setActiveDayIndex - Function to set the active day index.
+     */
+    const DayTabs = ({ days, activeDayIndex, setActiveDayIndex }) => {
+      return (
+        <div className="flex flex-wrap justify-center gap-2 p-2 bg-gray-100 dark:bg-gray-900 rounded-xl shadow-inner overflow-x-auto no-scrollbar">
+          {days.map((day, index) => (
+            <button
+              key={day.day}
+              onClick={() => setActiveDayIndex(index)}
+              className={`
+                px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out
+                ${index === activeDayIndex
+                  ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                  : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-gray-600 shadow-sm'
+                }
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+              `}
+            >
+              {day.day}
+              <br />
+              <span className="text-xs opacity-80">{day.date.split('(')[0].trim()}</span>
+            </button>
+          ))}
+        </div>
+      );
+    };
+
+    /**
+     * Footer component for attribution.
+     */
+    const Footer = () => {
+      return (
+        <footer className="w-full p-4 text-center text-gray-600 dark:text-gray-400 mt-8 text-sm">
+          <p>Built by Your Name | <a href="https://github.com/your-github-link" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub</a></p>
+        </footer>
+      );
+    };
+
+    /**
+     * Main App component for the NeetCode Progress Tracker.
+     */
+    function App() {
+      const [showLandingPage, setShowLandingPage] = React.useState(() => {
+        const hasStarted = localStorage.getItem('hasStartedChallenge');
+        return hasStarted !== 'true';
+      });
+
+      const [activeDayIndex, setActiveDayIndex] = React.useState(() => {
+        const savedIndex = localStorage.getItem('activeDayIndex');
+        return savedIndex !== null ? parseInt(savedIndex, 10) : 0;
+      });
+
+      const [isDarkMode, setIsDarkMode] = React.useState(() => {
+        const savedMode = localStorage.getItem('isDarkMode');
+        if (savedMode !== null) {
+          return JSON.parse(savedMode);
+        }
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      });
+
+      const [completedProblems, setCompletedProblems] = React.useState(() => {
+        const saved = localStorage.getItem('completedProblems');
+        return saved ? JSON.parse(saved) : {};
+      });
+
+      React.useEffect(() => {
+        localStorage.setItem('activeDayIndex', activeDayIndex.toString());
+      }, [activeDayIndex]);
+
+      React.useEffect(() => {
+        localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
+        if (isDarkMode) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }, [isDarkMode]);
+
+      React.useEffect(() => {
+        localStorage.setItem('completedProblems', JSON.stringify(completedProblems));
+      }, [completedProblems]);
+
+      const toggleDarkMode = () => {
+        setIsDarkMode(prevMode => !prevMode);
+      };
+
+      const handleProblemToggle = (dayName, problemTitle) => {
+        setCompletedProblems(prev => {
+          const newCompletedProblems = { ...prev };
+          if (!newCompletedProblems[dayName]) {
+            newCompletedProblems[dayName] = {};
+          }
+          newCompletedProblems[dayName][problemTitle] = !newCompletedProblems[dayName][problemTitle];
+          return newCompletedProblems;
+        });
+      };
+
+      const handleStartChallenge = () => {
+        setShowLandingPage(false);
+        localStorage.setItem('hasStartedChallenge', 'true');
+      };
+
+      if (showLandingPage) {
+        return <LandingPage onStartChallenge={handleStartChallenge} />;
+      }
+
+      return (
+        <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 font-inter text-gray-900 dark:text-white transition-colors duration-300">
+          <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+          <main className="flex-1 p-4 flex flex-col items-center">
+            <div className="w-full max-w-4xl">
+              <DayTabs
+                days={daysData}
+                activeDayIndex={activeDayIndex}
+                setActiveDayIndex={setActiveDayIndex}
+              />
+              <ProblemList
+                dayData={daysData[activeDayIndex]}
+                completedProblems={completedProblems}
+                onProblemToggle={handleProblemToggle}
+              />
+            </div>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // Render the React app to the root div
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
